@@ -1,9 +1,12 @@
 with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Streams.Stream_IO;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNAT.Command_Line; use GNAT.Command_Line;
+
+with PE;
 
 procedure Exe is
    Config        : Command_Line_Configuration;
@@ -36,4 +39,19 @@ begin
    end;
 
    -- File read, decoding time
+   declare
+
+      use Ada.Streams.Stream_IO;
+
+      F : File_Type;
+      S : Stream_Access;
+
+   begin
+
+      Open (F, In_File, File_Location.all);
+      S := Stream (F);
+
+      Ada.Text_IO.Put_Line (PE.Read_Object_Portable_Executable (F, S)'Image);
+
+   end;
 end Exe;

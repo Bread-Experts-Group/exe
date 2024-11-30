@@ -8,3 +8,9 @@ maintainers-logins = ["ATPStorages"]
 licenses = "Apache-2.0 WITH LLVM-exception"
 website = "https://javart.zip/p/exe"
 tags = ["exe"]
+
+[[depends-on]]
+byteflip = "~0.1.0-dev"
+
+[[pins]]
+byteflip = { path='../byteflip' }
