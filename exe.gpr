@@ -1,0 +1,31 @@
+with "config/exe_config.gpr";
+project Exe is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Exe_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("exe.adb");
+
+   package Builder is
+      for Switches ("Ada") use ("-m2", "-d", "-s", "-j0", "-largs", "-Wl,--gc-sections");
+   end Builder;
+
+   package Compiler is
+      for Switches ("Ada") use ("-gnatX", "-gnatyM179", "-g", "-gnateE", "-flto");
+      for Default_Switches ("Ada") use Exe_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es") & external ("binder", "shared");
+   end Binder;
+
+   package Linker is
+      for Switches ("Ada") use () & external ("linker", "shared");
+   end Linker;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Exe;
