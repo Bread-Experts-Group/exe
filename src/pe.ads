@@ -4,6 +4,7 @@ with Ada.Streams.Stream_IO;
 with Ada.Containers.Vectors;
 with Ada.Strings.Text_Buffers;
 with Ada.Containers.Indefinite_Holders;
+with Ada.Containers.Indefinite_Vectors;
 
 package PE is
 
@@ -296,20 +297,103 @@ package PE is
       Size            : Unsigned_32_Little_Endian;
    end record;
 
-   package Image_Data_Directory_Vectors is new Ada.Containers.Vectors (Positive, Image_Data_Directory);
+   type Image_Data_Directory_Types is
+     (OTHER,
+      EXPORT_TABLE,
+      IMPORT_TABLE,
+      RESOURCE_TABLE,
+      EXCEPTION_TABLE,
+      CERTIFICATE_TABLE,
+      BASE_RELOCATION_TABLE,
+      DEBUG,
+      RESERVED_ARCHITECTURE,
+      GLOBAL_POINTER,
+      THREAD_LOCAL_STORAGE_TABLE,
+      LOAD_CONFIGURATION_TABLE,
+      BOUND_IMPORT_TABLE,
+      IMPORT_ADDRESS_TABLE,
+      DELAY_IMPORT_DESCRIPTOR,
+      CLR_RUNTIME_HEADER,
+      RESERVED);
+
+   for Image_Data_Directory_Types use
+     (OTHER                      => 0,
+      EXPORT_TABLE               => 1,
+      IMPORT_TABLE               => 2,
+      RESOURCE_TABLE             => 3,
+      EXCEPTION_TABLE            => 4,
+      CERTIFICATE_TABLE          => 5,
+      BASE_RELOCATION_TABLE      => 6,
+      DEBUG                      => 7,
+      RESERVED_ARCHITECTURE      => 8,
+      GLOBAL_POINTER             => 9,
+      THREAD_LOCAL_STORAGE_TABLE => 10,
+      LOAD_CONFIGURATION_TABLE   => 11,
+      BOUND_IMPORT_TABLE         => 12,
+      IMPORT_ADDRESS_TABLE       => 13,
+      DELAY_IMPORT_DESCRIPTOR    => 14,
+      CLR_RUNTIME_HEADER         => 15,
+      RESERVED                   => 16);
+
+   type Export_Table_Pointers is record
+      Name          : Unsigned_32_Little_Endian;
+      Address_Table : Unsigned_32_Little_Endian;
+      Export_Name   : Unsigned_32_Little_Endian;
+      Ordinal_Table : Unsigned_32_Little_Endian;
+   end record;
+
+   type Export_Table_Sizes is record
+      Address_Table : Unsigned_32_Little_Endian;
+      Names         : Unsigned_32_Little_Endian;
+   end record;
+
+   type Import_Directory_Pointers is record
+      Lookup_Table  : Unsigned_32_Little_Endian;
+      Name          : Unsigned_32_Little_Endian;
+      Address_Table : Unsigned_32_Little_Endian;
+   end record;
+
+   type Import_Directory is record
+      Pointers        : Import_Directory_Pointers;
+      Time_Stamp      : Ada.Calendar.Time;
+      Forwarder_Index : Unsigned_32_Little_Endian;
+   end record;
+
+   package Import_Directory_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Import_Directory);
+   package Import_Lookup_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Import_Looup);
+
+   type Image_Data_Directory_Section (Section_Type : Image_Data_Directory_Types) is record
+      Directory : Image_Data_Directory;
+      case Section_Type is
+         when EXPORT_TABLE =>
+            Export_Flags        : Unsigned_32_Little_Endian;
+            Export_Time_Stamp   : Ada.Calendar.Time;
+            Export_Version      : Header_Version_4;
+            Export_Pointers     : Export_Table_Pointers;
+            Export_Ordinal_Base : Unsigned_32_Little_Endian;
+            Export_Sizes        : Export_Table_Sizes;
+         when IMPORT_TABLE =>
+            Import_Directories : Import_Directory_Vectors.Vector;
+            Import_Lookups     : Import_Lookup_Vectors.Vector;
+         when others =>
+            null;
+      end case;
+   end record;
+
+   package Image_Data_Directory_Section_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Image_Data_Directory_Section);
 
    type Windows_Specific_Optional_Header_Base is abstract tagged record
-      Section_Alignment        : Unsigned_32_Little_Endian;
-      File_Alignment           : Unsigned_32_Little_Endian;
-      Operating_System_Version : Header_Version_4;
-      Image_Version            : Header_Version_4;
-      Subsystem_Version        : Header_Version_4;
-      Reserved_Win32_Version   : Unsigned_32_Little_Endian;
-      Image_Checksum           : Unsigned_32_Little_Endian;
-      Subsystem                : Optional_Header_Windows_Subsystems;
-      DLL_Characteristics      : DLL_Characteristics_Flags;
-      Reserved_Loader_Flags    : Unsigned_32_Little_Endian;
-      Image_Data_Directories   : Image_Data_Directory_Vectors.Vector;
+      Section_Alignment             : Unsigned_32_Little_Endian;
+      File_Alignment                : Unsigned_32_Little_Endian;
+      Operating_System_Version      : Header_Version_4;
+      Image_Version                 : Header_Version_4;
+      Subsystem_Version             : Header_Version_4;
+      Reserved_Win32_Version        : Unsigned_32_Little_Endian;
+      Image_Checksum                : Unsigned_32_Little_Endian;
+      Subsystem                     : Optional_Header_Windows_Subsystems;
+      DLL_Characteristics           : DLL_Characteristics_Flags;
+      Reserved_Loader_Flags         : Unsigned_32_Little_Endian;
+      Image_Data_Directory_Sections : Image_Data_Directory_Section_Vectors.Vector;
    end record;
 
    type Windows_Specific_Optional_Header_64_Sizes is new Windows_Specific_Optional_Header_Base_Sizes with record
@@ -320,10 +404,8 @@ package PE is
    end record;
 
    type Windows_Specific_Optional_Header_64 is new Windows_Specific_Optional_Header_Base with record
-
       Image_Base_Pointer : Unsigned_64_Little_Endian;
       Sizes              : Windows_Specific_Optional_Header_64_Sizes;
-
    end record;
 
    procedure Read_Windows_Specific_Optional_Header_64 (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Windows_Specific_Optional_Header_64);
@@ -337,27 +419,21 @@ package PE is
    end record;
 
    type Windows_Specific_Optional_Header_32 is new Windows_Specific_Optional_Header_Base with record
-
       Image_Base_Pointer : Unsigned_32_Little_Endian;
       Sizes              : Windows_Specific_Optional_Header_32_Sizes;
-
    end record;
 
    procedure Read_Windows_Specific_Optional_Header_32 (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Windows_Specific_Optional_Header_32);
    for Windows_Specific_Optional_Header_32'Read use Read_Windows_Specific_Optional_Header_32;
 
    type Optional_Header_Sizes_Data is record
-
       Initialized   : Unsigned_32_Little_Endian;
       Uninitialized : Unsigned_32_Little_Endian;
-
    end record;
 
    type Optional_Header_Sizes is record
-
       Code : Unsigned_32_Little_Endian;
       Data : Optional_Header_Sizes_Data;
-
    end record;
 
    type Optional_Header_Bases (Magic : Optional_Header_Identifiers) is record
@@ -371,7 +447,6 @@ package PE is
    end record;
 
    type Optional_Header (Magic : Optional_Header_Identifiers) is record
-
       Linker_Version : Header_Version_2;
       Sizes          : Optional_Header_Sizes;
       Entry_Pointer  : Unsigned_32_Little_Endian;
@@ -384,7 +459,6 @@ package PE is
          when others =>
             Image_Base_32 : Windows_Specific_Optional_Header_32;
       end case;
-
    end record;
 
    function Read_Optional_Header (File : Ada.Streams.Stream_IO.File_Type; Stream : not null access Ada.Streams.Root_Stream_Type'Class) return Optional_Header;
@@ -525,6 +599,8 @@ package PE is
       Sections        : Image_Section_Vectors.Vector;
    end record;
 
+   procedure Read_Image_Data_Directories_Full
+     (File : Ada.Streams.Stream_IO.File_Type; Stream : not null access Ada.Streams.Root_Stream_Type'Class; From : in out Object_Portable_Executable);
    function Read_Object_Portable_Executable
      (File : Ada.Streams.Stream_IO.File_Type; Stream : not null access Ada.Streams.Root_Stream_Type'Class) return Object_Portable_Executable;
 
