@@ -10,7 +10,7 @@ website = "https://javart.zip/p/exe"
 tags = ["exe"]
 
 [[depends-on]]
-byteflip = "~0.1.0-dev"
+byteflippers = "~0.1.0-dev"
 
 [[pins]]
-byteflip = { path='../byteflip' }
+byteflippers = { path='../byteflippers' }

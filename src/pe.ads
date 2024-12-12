@@ -6,25 +6,16 @@ with Ada.Strings.Text_Buffers;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Indefinite_Vectors;
 
+with Byteflippers; use Byteflippers;
+
 package PE is
 
-   type Unsigned_8 is mod 2**8 with
-     Put_Image => Unsigned_8_Put_Image;
-   procedure Unsigned_8_Put_Image (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class; Value : Unsigned_8);
+   package Unsigned_16 renames Byteflippers.Endians_Unsigned_16;
+   package Unsigned_32 renames Byteflippers.Endians_Unsigned_32;
+   package Unsigned_64 renames Byteflippers.Endians_Unsigned_64;
 
-   type Unsigned_16_Little_Endian is mod 2**16 with
-     Put_Image => Unsigned_16_Put_Image;
-   procedure Read_Unsigned_16_Little_Endian (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Unsigned_16_Little_Endian);
-   for Unsigned_16_Little_Endian'Read use Read_Unsigned_16_Little_Endian;
-   procedure Unsigned_16_Put_Image (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class; Value : Unsigned_16_Little_Endian);
-
-   type Unsigned_32_Little_Endian is mod 2**32;
-   procedure Read_Unsigned_32_Little_Endian (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Unsigned_32_Little_Endian);
-   for Unsigned_32_Little_Endian'Read use Read_Unsigned_32_Little_Endian;
-
-   type Unsigned_64_Little_Endian is mod 2**64;
-   procedure Read_Unsigned_64_Little_Endian (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Unsigned_64_Little_Endian);
-   for Unsigned_64_Little_Endian'Read use Read_Unsigned_64_Little_Endian;
+   use all type Unsigned_16.Little_Endian;
+   use all type Unsigned_32.Little_Endian;
 
    type Machine_Types is
      (ANY,
@@ -140,28 +131,28 @@ package PE is
 
    type Reserved_16 is
      array (Positive range <>)
-     of Unsigned_16_Little_Endian;
+     of Unsigned_16.Little_Endian;
 
    type MZ_DOS_Header is record
       Magic                           : String (1 .. 2);
-      Last_Page_Size                  : Unsigned_16_Little_Endian;
-      Page_Count                      : Unsigned_16_Little_Endian;
-      Relocation_Count                : Unsigned_16_Little_Endian;
-      Header_Size_Paragraphs          : Unsigned_16_Little_Endian;
-      Minimum_Extra_Paragraphs_Needed : Unsigned_16_Little_Endian;
-      Maximum_Extra_Paragraphs_Needed : Unsigned_16_Little_Endian;
-      Initial_SS_Value_Rel            : Unsigned_16_Little_Endian;
-      Initial_SP_Value                : Unsigned_16_Little_Endian;
-      Checksum                        : Unsigned_16_Little_Endian;
-      Initial_IP_Value                : Unsigned_16_Little_Endian;
-      Initial_CS_Value_Rel            : Unsigned_16_Little_Endian;
-      Relocation_Table_Pointer        : Unsigned_16_Little_Endian;
-      Overlay_Number                  : Unsigned_16_Little_Endian;
+      Last_Page_Size                  : Unsigned_16.Little_Endian;
+      Page_Count                      : Unsigned_16.Little_Endian;
+      Relocation_Count                : Unsigned_16.Little_Endian;
+      Header_Size_Paragraphs          : Unsigned_16.Little_Endian;
+      Minimum_Extra_Paragraphs_Needed : Unsigned_16.Little_Endian;
+      Maximum_Extra_Paragraphs_Needed : Unsigned_16.Little_Endian;
+      Initial_SS_Value_Rel            : Unsigned_16.Little_Endian;
+      Initial_SP_Value                : Unsigned_16.Little_Endian;
+      Checksum                        : Unsigned_16.Little_Endian;
+      Initial_IP_Value                : Unsigned_16.Little_Endian;
+      Initial_CS_Value_Rel            : Unsigned_16.Little_Endian;
+      Relocation_Table_Pointer        : Unsigned_16.Little_Endian;
+      Overlay_Number                  : Unsigned_16.Little_Endian;
       Reserved_1                      : Reserved_16 (1 .. 4);
-      OEM_Identifier                  : Unsigned_16_Little_Endian;
-      OEM_Reserved                    : Unsigned_16_Little_Endian;
+      OEM_Identifier                  : Unsigned_16.Little_Endian;
+      OEM_Reserved                    : Unsigned_16.Little_Endian;
       Reserved_2                      : Reserved_16 (1 .. 10);
-      New_Header_Pointer              : Unsigned_16_Little_Endian;
+      New_Header_Pointer              : Unsigned_16.Little_Endian;
    end record;
 
    procedure Read_MZ_DOS_Header (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out MZ_DOS_Header);
@@ -196,8 +187,8 @@ package PE is
 
    type Header_Version_4 is record
 
-      Major : Unsigned_16_Little_Endian;
-      Minor : Unsigned_16_Little_Endian;
+      Major : Unsigned_16.Little_Endian;
+      Minor : Unsigned_16.Little_Endian;
 
    end record with
      Put_Image => Header_Version_4_Put_Image;
@@ -288,13 +279,13 @@ package PE is
    for DLL_Characteristics_Flags'Read use Read_DLL_Characteristics_Flags;
 
    type Windows_Specific_Optional_Header_Base_Sizes is abstract tagged record
-      Image   : Unsigned_32_Little_Endian;
-      Headers : Unsigned_32_Little_Endian;
+      Image   : Unsigned_32.Little_Endian;
+      Headers : Unsigned_32.Little_Endian;
    end record;
 
    type Image_Data_Directory is record
-      Virtual_Address : Unsigned_32_Little_Endian;
-      Size            : Unsigned_32_Little_Endian;
+      Virtual_Address : Unsigned_32.Little_Endian;
+      Size            : Unsigned_32.Little_Endian;
    end record;
 
    type Image_Data_Directory_Types is
@@ -336,45 +327,45 @@ package PE is
       RESERVED                   => 16);
 
    type Export_Table_Pointers is record
-      Name          : Unsigned_32_Little_Endian;
-      Address_Table : Unsigned_32_Little_Endian;
-      Export_Name   : Unsigned_32_Little_Endian;
-      Ordinal_Table : Unsigned_32_Little_Endian;
+      Name          : Unsigned_32.Little_Endian;
+      Address_Table : Unsigned_32.Little_Endian;
+      Export_Name   : Unsigned_32.Little_Endian;
+      Ordinal_Table : Unsigned_32.Little_Endian;
    end record;
 
    type Export_Table_Sizes is record
-      Address_Table : Unsigned_32_Little_Endian;
-      Names         : Unsigned_32_Little_Endian;
+      Address_Table : Unsigned_32.Little_Endian;
+      Names         : Unsigned_32.Little_Endian;
    end record;
 
    type Import_Directory_Pointers is record
-      Lookup_Table  : Unsigned_32_Little_Endian;
-      Name          : Unsigned_32_Little_Endian;
-      Address_Table : Unsigned_32_Little_Endian;
+      Lookup_Table  : Unsigned_32.Little_Endian;
+      Name          : Unsigned_32.Little_Endian;
+      Address_Table : Unsigned_32.Little_Endian;
    end record;
 
    type Import_Directory is record
       Pointers        : Import_Directory_Pointers;
       Time_Stamp      : Ada.Calendar.Time;
-      Forwarder_Index : Unsigned_32_Little_Endian;
+      Forwarder_Index : Unsigned_32.Little_Endian;
    end record;
 
    package Import_Directory_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Import_Directory);
-   package Import_Lookup_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Import_Looup);
+   --  package Import_Lookup_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Import_Looup);
 
    type Image_Data_Directory_Section (Section_Type : Image_Data_Directory_Types) is record
       Directory : Image_Data_Directory;
       case Section_Type is
          when EXPORT_TABLE =>
-            Export_Flags        : Unsigned_32_Little_Endian;
+            Export_Flags        : Unsigned_32.Little_Endian;
             Export_Time_Stamp   : Ada.Calendar.Time;
             Export_Version      : Header_Version_4;
             Export_Pointers     : Export_Table_Pointers;
-            Export_Ordinal_Base : Unsigned_32_Little_Endian;
+            Export_Ordinal_Base : Unsigned_32.Little_Endian;
             Export_Sizes        : Export_Table_Sizes;
          when IMPORT_TABLE =>
             Import_Directories : Import_Directory_Vectors.Vector;
-            Import_Lookups     : Import_Lookup_Vectors.Vector;
+            --  Import_Lookups     : Import_Lookup_Vectors.Vector;
          when others =>
             null;
       end case;
@@ -383,28 +374,28 @@ package PE is
    package Image_Data_Directory_Section_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Image_Data_Directory_Section);
 
    type Windows_Specific_Optional_Header_Base is abstract tagged record
-      Section_Alignment             : Unsigned_32_Little_Endian;
-      File_Alignment                : Unsigned_32_Little_Endian;
+      Section_Alignment             : Unsigned_32.Little_Endian;
+      File_Alignment                : Unsigned_32.Little_Endian;
       Operating_System_Version      : Header_Version_4;
       Image_Version                 : Header_Version_4;
       Subsystem_Version             : Header_Version_4;
-      Reserved_Win32_Version        : Unsigned_32_Little_Endian;
-      Image_Checksum                : Unsigned_32_Little_Endian;
+      Reserved_Win32_Version        : Unsigned_32.Little_Endian;
+      Image_Checksum                : Unsigned_32.Little_Endian;
       Subsystem                     : Optional_Header_Windows_Subsystems;
       DLL_Characteristics           : DLL_Characteristics_Flags;
-      Reserved_Loader_Flags         : Unsigned_32_Little_Endian;
+      Reserved_Loader_Flags         : Unsigned_32.Little_Endian;
       Image_Data_Directory_Sections : Image_Data_Directory_Section_Vectors.Vector;
    end record;
 
    type Windows_Specific_Optional_Header_64_Sizes is new Windows_Specific_Optional_Header_Base_Sizes with record
-      Stack_Reserve : Unsigned_64_Little_Endian;
-      Stack_Commit  : Unsigned_64_Little_Endian;
-      Heap_Reserve  : Unsigned_64_Little_Endian;
-      Heap_Commit   : Unsigned_64_Little_Endian;
+      Stack_Reserve : Unsigned_64.Little_Endian;
+      Stack_Commit  : Unsigned_64.Little_Endian;
+      Heap_Reserve  : Unsigned_64.Little_Endian;
+      Heap_Commit   : Unsigned_64.Little_Endian;
    end record;
 
    type Windows_Specific_Optional_Header_64 is new Windows_Specific_Optional_Header_Base with record
-      Image_Base_Pointer : Unsigned_64_Little_Endian;
+      Image_Base_Pointer : Unsigned_64.Little_Endian;
       Sizes              : Windows_Specific_Optional_Header_64_Sizes;
    end record;
 
@@ -412,14 +403,14 @@ package PE is
    for Windows_Specific_Optional_Header_64'Read use Read_Windows_Specific_Optional_Header_64;
 
    type Windows_Specific_Optional_Header_32_Sizes is new Windows_Specific_Optional_Header_Base_Sizes with record
-      Stack_Reserve : Unsigned_32_Little_Endian;
-      Stack_Commit  : Unsigned_32_Little_Endian;
-      Heap_Reserve  : Unsigned_32_Little_Endian;
-      Heap_Commit   : Unsigned_32_Little_Endian;
+      Stack_Reserve : Unsigned_32.Little_Endian;
+      Stack_Commit  : Unsigned_32.Little_Endian;
+      Heap_Reserve  : Unsigned_32.Little_Endian;
+      Heap_Commit   : Unsigned_32.Little_Endian;
    end record;
 
    type Windows_Specific_Optional_Header_32 is new Windows_Specific_Optional_Header_Base with record
-      Image_Base_Pointer : Unsigned_32_Little_Endian;
+      Image_Base_Pointer : Unsigned_32.Little_Endian;
       Sizes              : Windows_Specific_Optional_Header_32_Sizes;
    end record;
 
@@ -427,20 +418,20 @@ package PE is
    for Windows_Specific_Optional_Header_32'Read use Read_Windows_Specific_Optional_Header_32;
 
    type Optional_Header_Sizes_Data is record
-      Initialized   : Unsigned_32_Little_Endian;
-      Uninitialized : Unsigned_32_Little_Endian;
+      Initialized   : Unsigned_32.Little_Endian;
+      Uninitialized : Unsigned_32.Little_Endian;
    end record;
 
    type Optional_Header_Sizes is record
-      Code : Unsigned_32_Little_Endian;
+      Code : Unsigned_32.Little_Endian;
       Data : Optional_Header_Sizes_Data;
    end record;
 
    type Optional_Header_Bases (Magic : Optional_Header_Identifiers) is record
-      Code : Unsigned_32_Little_Endian;
+      Code : Unsigned_32.Little_Endian;
       case Magic is
          when PE_32 =>
-            Data : Unsigned_32_Little_Endian;
+            Data : Unsigned_32.Little_Endian;
          when others =>
             null;
       end case;
@@ -449,7 +440,7 @@ package PE is
    type Optional_Header (Magic : Optional_Header_Identifiers) is record
       Linker_Version : Header_Version_2;
       Sizes          : Optional_Header_Sizes;
-      Entry_Pointer  : Unsigned_32_Little_Endian;
+      Entry_Pointer  : Unsigned_32.Little_Endian;
       Bases          : Optional_Header_Bases (Magic);
 
       --  Windows-specific fields
@@ -465,17 +456,17 @@ package PE is
    package Optional_Header_Holders is new Ada.Containers.Indefinite_Holders (Optional_Header);
 
    type Image_Section_Sizes is record
-      Virtual      : Unsigned_32_Little_Endian;
-      Raw_Data     : Unsigned_32_Little_Endian;
-      Relocations  : Unsigned_16_Little_Endian;
-      Line_Numbers : Unsigned_16_Little_Endian;
+      Virtual      : Unsigned_32.Little_Endian;
+      Raw_Data     : Unsigned_32.Little_Endian;
+      Relocations  : Unsigned_16.Little_Endian;
+      Line_Numbers : Unsigned_16.Little_Endian;
    end record;
 
    type Image_Section_Pointers is record
-      Virtual      : Unsigned_32_Little_Endian;
-      Raw_Data     : Unsigned_32_Little_Endian;
-      Relocations  : Unsigned_32_Little_Endian;
-      Line_Numbers : Unsigned_32_Little_Endian;
+      Virtual      : Unsigned_32.Little_Endian;
+      Raw_Data     : Unsigned_32.Little_Endian;
+      Relocations  : Unsigned_32.Little_Endian;
+      Line_Numbers : Unsigned_32.Little_Endian;
    end record;
 
    type Section_Characteristics is
