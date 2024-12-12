@@ -12,7 +12,7 @@ project Exe is
    end Builder;
 
    package Compiler is
-      for Switches ("Ada") use ("-gnatX", "-gnatyM179", "-g", "-gnateE", "-flto");
+      for Switches ("Ada") use ("-gnatX0", "-gnatyM179", "-g", "-gnateE", "-flto");
       for Default_Switches ("Ada") use Exe_Config.Ada_Compiler_Switches;
    end Compiler;
 

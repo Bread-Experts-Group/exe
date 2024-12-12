@@ -86,7 +86,7 @@ package body PE is
 
    procedure Header_Version_2_Put_Image (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class; Value : Header_Version_2) is
    begin
-      Output.Put ('v' & Value.Major'Image & '.' & Value.Minor'Image);
+      Output.Put (f"v{Value.Major'Image}.{Value.Minor'Image}");
    end Header_Version_2_Put_Image;
 
    procedure Read_Header_Version_4 (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Header_Version_4) is
@@ -97,7 +97,7 @@ package body PE is
 
    procedure Header_Version_4_Put_Image (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class; Value : Header_Version_4) is
    begin
-      Output.Put ('v' & Value.Major'Image & '.' & Value.Minor'Image);
+      Output.Put (f"v{Value.Major'Image}.{Value.Minor'Image}");
    end Header_Version_4_Put_Image;
 
    procedure Read_Optional_Header_Windows_Subsystem (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Optional_Header_Windows_Subsystems) is
@@ -158,19 +158,16 @@ package body PE is
       Unsigned_64.Little_Endian'Read (Stream, Item.Sizes.Heap_Commit);
       Unsigned_32.Little_Endian'Read (Stream, Item.Reserved_Loader_Flags);
       for Index in 1 .. Unsigned_32.Little_Endian'Input (Stream) loop
-         declare
-            Section   :
-              Image_Data_Directory_Section
-                (if Index > Image_Data_Directory_Types'Enum_Rep (Image_Data_Directory_Types'Last) then OTHER else Image_Data_Directory_Types'Enum_Val (Index));
-            Directory : Image_Data_Directory;
-         begin
-            Unsigned_32.Little_Endian'Read (Stream, Directory.Virtual_Address);
-            Unsigned_32.Little_Endian'Read (Stream, Directory.Size);
-            if Directory.Virtual_Address /= 0 or else Directory.Size /= 0 then
-               Section.Directory := Directory;
-               Item.Image_Data_Directory_Sections.Append (Section);
-            end if;
-         end;
+         Section   : Image_Data_Directory_Section
+                        (if Index > Image_Data_Directory_Types'Enum_Rep (Image_Data_Directory_Types'Last) then OTHER else Image_Data_Directory_Types'Enum_Val (Index));
+         Directory : Image_Data_Directory;
+
+         Unsigned_32.Little_Endian'Read (Stream, Directory.Virtual_Address);
+         Unsigned_32.Little_Endian'Read (Stream, Directory.Size);
+         if Directory.Virtual_Address /= 0 or else Directory.Size /= 0 then
+            Section.Directory := Directory;
+            Item.Image_Data_Directory_Sections.Append (Section);
+         end if;
       end loop;
    end Read_Windows_Specific_Optional_Header_64;
 
@@ -194,19 +191,16 @@ package body PE is
       Unsigned_32.Little_Endian'Read (Stream, Item.Sizes.Heap_Commit);
       Unsigned_32.Little_Endian'Read (Stream, Item.Reserved_Loader_Flags);
       for Index in 1 .. Unsigned_32.Little_Endian'Input (Stream) loop
-         declare
-            Section   :
-              Image_Data_Directory_Section
-                (if Index > Image_Data_Directory_Types'Enum_Rep (Image_Data_Directory_Types'Last) then OTHER else Image_Data_Directory_Types'Enum_Val (Index));
-            Directory : Image_Data_Directory;
-         begin
-            Unsigned_32.Little_Endian'Read (Stream, Directory.Virtual_Address);
-            Unsigned_32.Little_Endian'Read (Stream, Directory.Size);
-            if Directory.Virtual_Address /= 0 or else Directory.Size /= 0 then
-               Section.Directory := Directory;
-               Item.Image_Data_Directory_Sections.Append (Section);
-            end if;
-         end;
+         Section   : Image_Data_Directory_Section
+                        (if Index > Image_Data_Directory_Types'Enum_Rep (Image_Data_Directory_Types'Last) then OTHER else Image_Data_Directory_Types'Enum_Val (Index));
+         Directory : Image_Data_Directory;
+         
+         Unsigned_32.Little_Endian'Read (Stream, Directory.Virtual_Address);
+         Unsigned_32.Little_Endian'Read (Stream, Directory.Size);
+         if Directory.Virtual_Address /= 0 or else Directory.Size /= 0 then
+            Section.Directory := Directory;
+            Item.Image_Data_Directory_Sections.Append (Section);
+         end if;
       end loop;
    end Read_Windows_Specific_Optional_Header_32;
 
@@ -282,48 +276,43 @@ package body PE is
    begin
       for Directory in Windows_Header.Image_Data_Directory_Sections.Iterate loop
          for Object of From.Sections loop
-            declare
-               Actual : Image_Data_Directory_Section := Directory.Element;
-            begin
-               if Actual.Directory.Virtual_Address >= Object.Pointers.Virtual and then Actual.Directory.Virtual_Address <= (Object.Pointers.Virtual + Object.Sizes.Raw_Data) then
-                  Location := Ada.Streams.Stream_IO.Positive_Count (Actual.Directory.Virtual_Address - Object.Pointers.Virtual + Object.Pointers.Raw_Data);
-                  File.Set_Index (Location);
-                  case Actual.Section_Type is
-                     when EXPORT_TABLE =>
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Flags);
-                        Actual.Export_Time_Stamp := Ada.Calendar.Conversions.To_Ada_Time (Interfaces.C.long (Unsigned_32.Little_Endian'Input (Stream)));
-                        Header_Version_4'Read (Stream, Actual.Export_Version);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Name);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Ordinal_Base);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Sizes.Address_Table);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Sizes.Names);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Address_Table);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Export_Name);
-                        Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Ordinal_Table);
-                     when IMPORT_TABLE =>
-                        declare
-                           ITD       : Import_Directory;
-                           Read_Time : Unsigned_32.Little_Endian;
-                        begin
-                           loop
-                              Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Lookup_Table);
-                              Unsigned_32.Little_Endian'Read (Stream, Read_Time);
-                              ITD.Time_Stamp := Ada.Calendar.Conversions.To_Ada_Time (Interfaces.C.long (Read_Time));
-                              Unsigned_32.Little_Endian'Read (Stream, ITD.Forwarder_Index);
-                              Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Name);
-                              Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Address_Table);
-                              exit when ITD.Pointers.Lookup_Table + Read_Time + ITD.Forwarder_Index + ITD.Pointers.Name + ITD.Pointers.Address_Table = 0;
-                              Actual.Import_Directories.Append (ITD);
-                           end loop;
-                        end;
-                     when others =>
-                        null;
-                  end case;
+            Actual : Image_Data_Directory_Section := Directory.Element;
 
-                  Windows_Header.Image_Data_Directory_Sections.Replace_Element (Directory, Actual);
-                  exit;
-               end if;
-            end;
+            if Actual.Directory.Virtual_Address >= Object.Pointers.Virtual and then Actual.Directory.Virtual_Address <= (Object.Pointers.Virtual + Object.Sizes.Raw_Data) then
+               Location := Ada.Streams.Stream_IO.Positive_Count (Actual.Directory.Virtual_Address - Object.Pointers.Virtual + Object.Pointers.Raw_Data);
+               File.Set_Index (Location);
+               case Actual.Section_Type is
+                  when EXPORT_TABLE =>
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Flags);
+                     Actual.Export_Time_Stamp := Ada.Calendar.Conversions.To_Ada_Time (Interfaces.C.long (Unsigned_32.Little_Endian'Input (Stream)));
+                     Header_Version_4'Read (Stream, Actual.Export_Version);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Name);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Ordinal_Base);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Sizes.Address_Table);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Sizes.Names);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Address_Table);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Export_Name);
+                     Unsigned_32.Little_Endian'Read (Stream, Actual.Export_Pointers.Ordinal_Table);
+                  when IMPORT_TABLE =>
+                     ITD       : Import_Directory;
+                     Read_Time : Unsigned_32.Little_Endian;
+                     loop
+                        Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Lookup_Table);
+                        Unsigned_32.Little_Endian'Read (Stream, Read_Time);
+                        ITD.Time_Stamp := Ada.Calendar.Conversions.To_Ada_Time (Interfaces.C.long (Read_Time));
+                        Unsigned_32.Little_Endian'Read (Stream, ITD.Forwarder_Index);
+                        Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Name);
+                        Unsigned_32.Little_Endian'Read (Stream, ITD.Pointers.Address_Table);
+                        exit when ITD.Pointers.Lookup_Table + Read_Time + ITD.Forwarder_Index + ITD.Pointers.Name + ITD.Pointers.Address_Table = 0;
+                        Actual.Import_Directories.Append (ITD);
+                     end loop;
+                  when others =>
+                     null;
+               end case;
+
+               Windows_Header.Image_Data_Directory_Sections.Replace_Element (Directory, Actual);
+               exit;
+            end if;
          end loop;
       end loop;
       if Header.Magic = PE_32_EXTENDED_ADDRESSING then

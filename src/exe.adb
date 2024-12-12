@@ -25,16 +25,16 @@ begin
       end if;
 
       if Ada.Directories.Kind (File_Location.all) /= Ada.Directories.Ordinary_File then
-         Ada.Text_IO.Put_Line ("The provided file path (" & File_Location.all & ") is not a file");
+         Ada.Text_IO.Put_Line (f"The provided file path ({File_Location.all}) is not a file");
          GNAT.OS_Lib.OS_Exit (1);
       end if;
    exception
       when Exit_From_Command_Line =>
-         Ada.Text_IO.Put_Line (ASCII.LF & "Report problems to Bread Experts Group " & "[https://github.com/Bread-Experts-Group/exe]");
+         Ada.Text_IO.Put_Line (f"\nReport problems to Bread Experts Group [https://github.com/Bread-Experts-Group/exe]");
          GNAT.OS_Lib.OS_Exit (0);
 
       when E : others =>
-         Ada.Text_IO.Put_Line ("Error reading arguments: " & E.Exception_Information);
+         Ada.Text_IO.Put_Line (f"Error reading arguments: {E.Exception_Information}");
          GNAT.OS_Lib.OS_Exit (1);
    end;
 
