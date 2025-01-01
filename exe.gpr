@@ -19,12 +19,8 @@ project Exe is
    end Compiler;
 
    package Binder is
-      for Switches ("Ada") use ("-Es") & external ("binder", "shared");
+      for Switches ("Ada") use ("-Es");
    end Binder;
-
-   package Linker is
-      for Switches ("Ada") use () & external ("linker", "shared");
-   end Linker;
 
    package Install is
       for Artifacts (".") use ("share");
