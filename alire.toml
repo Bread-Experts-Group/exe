@@ -13,4 +13,4 @@ tags = ["exe"]
 byteflippers = "~0.1.0-dev"
 
 [[pins]]
-byteflippers = { path='../byteflippers' }
+byteflippers = { url='https://github.com/Bread-Experts-Group/byteflippers.git' }
